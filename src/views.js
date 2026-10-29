@@ -10,7 +10,7 @@ const opts = (list, cur) => list.map((o) => `<option value="${esc(o)}" ${o === c
 
 const LOGO = `<svg class="logo-mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="8" fill="currentColor"/><path d="M9 23L16 8l7 15M12 18.5h8" fill="none" stroke="var(--paper)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
-export function layout({ title, body, user, csrf, flash, stripeMode, description, wide }) {
+export function layout({ title, body, user, csrf, flash, stripeMode, description, wide, canonical, noindex, jsonld }) {
   const nav = user
     ? `<a href="/panel">Mis pedidos</a><a href="/panel/facturacion">Facturación</a>${user.is_admin ? '<a href="/admin">Admin</a>' : ''}
        <form method="post" action="/salir" class="inline">${csrfField(csrf)}<button class="link">Salir</button></form>`
@@ -24,6 +24,13 @@ export function layout({ title, body, user, csrf, flash, stripeMode, description
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)} · Adforja</title>
 <meta name="description" content="${esc(description || 'Imágenes, vídeos cortos y textos para tus anuncios, creados con IA y revisados por personas. Pide presupuesto sin compromiso.')}">
+${noindex ? '<meta name="robots" content="noindex,nofollow">' : ''}
+${canonical ? `<link rel="canonical" href="${esc(canonical)}">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Adforja"><meta property="og:locale" content="es_ES">
+<meta property="og:title" content="${esc(title)} · Adforja"><meta property="og:url" content="${esc(canonical)}">
+<meta property="og:description" content="${esc(description || 'Imágenes, vídeos cortos y textos para tus anuncios, creados con IA y revisados por personas. Pide presupuesto sin compromiso.')}">
+<meta name="twitter:card" content="summary">` : ''}
+${jsonld ? `<script type="application/ld+json">${JSON.stringify(jsonld).replace(/</g, '\\u003c')}</script>` : ''}
 <link rel="stylesheet" href="/styles.css">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 </head>

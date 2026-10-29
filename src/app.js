@@ -13,6 +13,7 @@ import { legalPage } from './legal.js';
 const scrypt = promisify(crypto.scrypt);
 const PUBLIC_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'public');
 const SESSION_DAYS = 30;
+const PUBLIC_PATHS = new Set(['/', '/servicios', '/muestras', '/precios', '/presupuesto']);
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export async function hashPassword(pw) {
@@ -64,9 +65,9 @@ export function createApp({ config, db, stripe, mailer, now = () => Date.now(), 
   }
 
   // ---------- rutas públicas ----------
-  router.get('/', (c) => { metric('visita_inicio'); c.page('Creatividades para tus anuncios', V.landingPage()); });
-  router.get('/servicios', (c) => { metric('visita_servicios'); c.page('Servicios', V.servicesPage()); });
-  router.get('/muestras', (c) => { metric('visita_muestras'); c.page('Muestras de estilo', V.samplesPage()); });
+  router.get('/', (c) => { metric('visita_inicio'); c.page('Creatividades para anuncios con IA: imágenes, vídeo y textos', V.landingPage(), 200, { description: 'Estudio de creatividades para anuncios con IA y revisión humana: imágenes, vídeos cortos y textos para Meta, Google y TikTok Ads. Desde 29 €. Pide presupuesto sin compromiso.' }); });
+  router.get('/servicios', (c) => { metric('visita_servicios'); c.page('Servicios de creatividades para anuncios', V.servicesPage(), 200, { description: 'Imágenes publicitarias, vídeo corto y textos para anuncios hechos con IA y revisados por personas. Precios claros y entrega en plazo.' }); });
+  router.get('/muestras', (c) => { metric('visita_muestras'); c.page('Muestras de estilo para anuncios', V.samplesPage(), 200, { description: 'Ejemplos ilustrativos de estilos visuales para tus anuncios con IA.' }); });
   router.get('/precios', (c) => {
     metric('visita_precios');
     c.page('Paquetes mensuales', V.pricingPage({ user: c.user, csrf: c.csrf, entitlement: c.user ? billing.entitlement(c.user.id) : null, canceled: c.query.get('cancelado'), stripeReady }));
@@ -99,7 +100,12 @@ export function createApp({ config, db, stripe, mailer, now = () => Date.now(), 
     try { db.prepare('SELECT 1').get(); } catch { dbOk = false; }
     c.json(dbOk ? 200 : 503, { ok: dbOk, stripe: config.stripe.mode, email: mailer.configured });
   });
-  router.get('/robots.txt', (c) => c.text('User-agent: *\nDisallow: /panel\nDisallow: /admin\n'));
+  router.get('/robots.txt', (c) => c.text(`User-agent: *\nDisallow: /panel\nDisallow: /admin\nSitemap: ${config.baseUrl}/sitemap.xml\n`));
+  router.get('/sitemap.xml', (c) => {
+    const urls = [...PUBLIC_PATHS].map((p) => `<url><loc>${config.baseUrl}${p === '/' ? '/' : p}</loc></url>`).join('');
+    c.res.writeHead(200, { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=3600' });
+    c.res.end(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`);
+  });
 
   // ---------- registro e inicio de sesión ----------
   router.get('/registro', (c) => c.user ? c.redirect('/panel') : c.page('Crear cuenta', V.authPage({ mode: 'registro', csrf: c.csrf, plan: PLANS[c.query.get('plan')] ? c.query.get('plan') : '' })));
@@ -431,7 +437,12 @@ export function createApp({ config, db, stripe, mailer, now = () => Date.now(), 
       page(title, body, status = 200, opts = {}) {
         if (res.headersSent) return;
         res.writeHead(status, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
-        res.end(V.layout({ title, body, user: c.user, csrf, flash, stripeMode: config.stripe.mode, ...opts }));
+        const seo = {};
+        if (status === 200 && PUBLIC_PATHS.has(path)) {
+          seo.canonical = config.baseUrl + (path === '/' ? '/' : path);
+          if (path === '/') seo.jsonld = { '@context': 'https://schema.org', '@type': 'Organization', name: 'Adforja', url: config.baseUrl, description: 'Estudio de creatividades publicitarias con IA y revisión humana: imágenes, vídeo corto y textos para anuncios.' };
+        } else seo.noindex = true;
+        res.end(V.layout({ title, body, user: c.user, csrf, flash, stripeMode: config.stripe.mode, ...seo, ...opts }));
       },
       json(status, obj) { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(obj)); },
       text(t) { res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' }); res.end(t); },
