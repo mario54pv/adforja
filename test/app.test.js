@@ -160,3 +160,19 @@ describe('Cuentas, paquetes y pedidos', () => {
     assert.equal(r.status, 400);
   });
 });
+
+describe('SEO básico', () => {
+  test('páginas públicas con canonical, sitemap y robots; privadas con noindex', async () => {
+    const ctx = await startApp();
+    try {
+      const home = await (await fetch(`${ctx.base}/`)).text();
+      assert.match(home, /<link rel="canonical" href="http:\/\/localhost:3000\/">/);
+      assert.match(home, /application\/ld\+json/);
+      const priv = await (await fetch(`${ctx.base}/entrar`)).text();
+      assert.match(priv, /noindex/);
+      const sm = await (await fetch(`${ctx.base}/sitemap.xml`)).text();
+      assert.match(sm, /<loc>http:\/\/localhost:3000\/servicios<\/loc>/);
+      assert.match(await (await fetch(`${ctx.base}/robots.txt`)).text(), /Sitemap: http:\/\/localhost:3000\/sitemap\.xml/);
+    } finally { await ctx.close(); }
+  });
+});
