@@ -1,0 +1,15 @@
+{
+  "name": "adforja",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Adforja: estudio de creatividades publicitarias con IA y revisión humana, con paquetes mensuales en Stripe.",
+  "type": "module",
+  "main": "src/server.js",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env src/server.js",
+    "dev": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env --watch src/server.js",
+    "stripe:setup": "node --env-file-if-exists=.env scripts/stripe-setup.js",
+    "test": "node --disable-warning=ExperimentalWarning --test test/app.test.js"
+  }
+}

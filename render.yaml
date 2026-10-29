@@ -1,0 +1,54 @@
+# Blueprint de Render: crea el servicio web con disco persistente para la base de datos.
+# Render > New > Blueprint > selecciona este repositorio. Te pedirá los valores marcados con sync: false.
+services:
+  - type: web
+    name: adforja
+    runtime: node
+    plan: starter            # el plan gratuito no admite disco persistente
+    region: frankfurt
+    buildCommand: "echo sin dependencias que instalar"
+    startCommand: "npm start"
+    healthCheckPath: /salud
+    disk:
+      name: datos
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "true"
+      - key: DATABASE_PATH
+        value: /data/adforja.db
+      - key: ALLOW_LIVE_PAYMENTS
+        value: "false"
+      - key: AI_MODEL
+        value: claude-haiku-5-5
+      - key: ADMIN_EMAIL
+        value: mariopalomaresvaldeiglesias@gmail.com
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_STARTER
+        sync: false
+      - key: STRIPE_PRICE_GROWTH
+        sync: false
+      - key: STRIPE_PRICE_SCALE
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      - key: LEGAL_OWNER
+        sync: false
+      - key: LEGAL_TAX_ID
+        sync: false
+      - key: LEGAL_ADDRESS
+        sync: false
+      - key: LEGAL_EMAIL
+        sync: false
