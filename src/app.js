@@ -101,6 +101,10 @@ export function createApp({ config, db, stripe, mailer, now = () => Date.now(), 
     c.json(dbOk ? 200 : 503, { ok: dbOk, stripe: config.stripe.mode, email: mailer.configured });
   });
   router.get('/robots.txt', (c) => c.text(`User-agent: *\nDisallow: /panel\nDisallow: /admin\nSitemap: ${config.baseUrl}/sitemap.xml\n`));
+  router.get('/google35c4b52613777345.html', (c) => {
+    c.res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    c.res.end('google-site-verification: google35c4b52613777345.html');
+  });
   router.get('/sitemap.xml', (c) => {
     const urls = [...PUBLIC_PATHS].map((p) => `<url><loc>${config.baseUrl}${p === '/' ? '/' : p}</loc></url>`).join('');
     c.res.writeHead(200, { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=3600' });
